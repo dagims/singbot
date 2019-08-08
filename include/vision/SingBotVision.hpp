@@ -26,6 +26,7 @@
 #define _SINGBOT_VISION_PERCEPTION_H_
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/saliency.hpp>
 
 #define HAVE_GUILE
 #include <opencog/atomspace/AtomSpace.h>
@@ -42,6 +43,7 @@
 
 using namespace std;
 using namespace cv;
+using namespace cv::saliency;
 using namespace opencog;
 
 class SingBotVision
@@ -50,22 +52,18 @@ private:
     AtomSpace *_as;
     thread *run_v;
     
-    SingBotVision(AtomSpace *as) {_as = as;};
-    static SingBotVision *_singbot_vision;
-    
     static void vision_loop(SingBotVision *);
-    short init_vision(int cam, int width, int height);
     Mat read_frame();
     vector<Rect> detect_faces(Mat in);
     vector<Rect> detect_smiles(Mat in);
-    Point sal_point(Mat in);
+    Point2f detect_sal(Mat in);
 
     //data
     VideoCapture cap;
     Mat frame;
     const string haarcascade_file_face = "haarcascade_frontalface_alt.xml";
     const string haarcascade_file_smile = "haarcascade_smile.xml";
-    CascadeClassifier cascade_face, smile_cascade;
+    CascadeClassifier cascade_face, cascade_smile;
     Ptr<Saliency> sal_det;
     vector<vector<Point> > cntrs;
     vector<Vec4i> hier;
@@ -73,11 +71,15 @@ private:
     int largest_cntr_idx = 0;
     double max = 0, area;
     float rad;
+    bool ok = false;
 
 public:
-    SingBotVision* SingBotVisionGetInstance(AtomSpace *as);
-    short start_vision();
-    short stop_vision();
+    SingBotVision();
+    
+    void init_as(AtomSpace *as) {_as = as; ok = true;}
+    void init_vision();
+    void start_vision();
+    void stop_vision();
 };
 
 #endif //_SINGBOT_VISION_PERCEPTION_H_
