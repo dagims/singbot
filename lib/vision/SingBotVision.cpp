@@ -27,9 +27,9 @@ void SingBotVision::stop_vision()
 void SingBotVision::init_vision()
 {
     //XXX these values should be set from the scheme module
-    int cam = 0;
-    int width = 320;
-    int height = 240;
+    cam = 0;
+    width = 320;
+    height = 240;
     cap.open(cam);
     if(!cap.isOpened())
         return;
@@ -142,14 +142,18 @@ void SingBotVision::vision_loop(SingBotVision *_sbv)
             cent.x = faces[idx].x + (faces[idx].width/2.0);
             cent.y = faces[idx].y + (faces[idx].height/2.0);
             pap = createFloatValue(
-                    vector<double>({cent.x, cent.y}));
+                    vector<double>({
+                        SCALE_D(cent.x, width),
+                        SCALE_D(cent.y, height)}));
             h->setValue(ps_h, pap);
             smiles = _sbv->detect_smiles(fimg(faces[idx]));
             pap = createFloatValue(smiles.empty() ? 0.0 : 1.0);
             h->setValue(sm_h, pap);
             cent = _sbv->detect_sal(fimg);
             pap = createFloatValue(
-                    vector<double>({cent.x, cent.y}));
+                    vector<double>({
+                        SCALE_D(cent.x, width),
+                        SCALE_D(cent.y, height)}));
             sp_h->setValue(ps_h, pap);
         }
 

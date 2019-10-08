@@ -12,8 +12,8 @@
  * Runs on its own thread and sets opencog values on detection.
  * Values set according to:
  *      Valuation
- *          Predicate "position"
  *          Concept "face/smile/salient point"
+ *          Predicate "position"
  *          FloatValue X Y
  * The X,Y values are normalized between 0 - 1 where 0,0 is 
  * top left corner of frame.
@@ -34,12 +34,13 @@
 
 #include <opencog/guile/SchemePrimitive.h>
 
-
 #include <iostream>
 #include <string>
 #include <cstdio>
 #include <thread>
 #include <mutex>
+
+#define SCALE_D(x, n) (x / float(n))
 
 using namespace std;
 using namespace cv;
@@ -59,6 +60,7 @@ private:
     Point2f detect_sal(Mat in);
 
     //data
+    int cam, width, height;
     VideoCapture cap;
     Mat frame;
     const string haarcascade_file_face = "haarcascade_frontalface_alt.xml";
@@ -72,6 +74,7 @@ private:
     double max = 0, area;
     float rad;
     bool ok = false;
+
 
 public:
     SingBotVision();

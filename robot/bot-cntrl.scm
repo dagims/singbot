@@ -66,5 +66,3 @@
 
 (define (send-cmd cmd)
     (robot-cmd (hash-ref cmd-code cmd)))
-
-
