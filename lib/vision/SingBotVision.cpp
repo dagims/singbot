@@ -29,7 +29,7 @@ void SingBotVision::init_vision()
     //XXX these values should be set from the scheme module
     cam = 0;
     width = 320;
-    height = 240;
+    height = 320;
     cap.open(cam);
     if(!cap.isOpened())
         return;
@@ -37,6 +37,8 @@ void SingBotVision::init_vision()
     cap.set(CV_CAP_PROP_FRAME_HEIGHT, height);
     cascade_face.load(haarcascade_file_face);
     cascade_smile.load(haarcascade_file_smile);
+    rpy = new RaspiYolo("coco.data", "yolov3-tiny.cfg",
+                        "yolov3-tiny.weights", 0.5, 0.5, false);
 }
 
 Mat SingBotVision::read_frame()
@@ -116,13 +118,15 @@ void SingBotVision::vision_loop(SingBotVision *_sbv)
      * 
     */
     
-    Mat img, fimg;
+    Mat img, fimg, yimg;
     vector<Rect> faces, smiles;
     Point2f cent;
     string str;
     size_t idx = 0;
 
     Handle h;
+    Handle pr_h = _sbv->_as->add_node(CONCEPT_NODE, "person");
+    Handle dg_h = _sbv->_as->add_node(CONCEPT_NODE, "dog");
     Handle ps_h = _sbv->_as->add_node(PREDICATE_NODE, "position");
     Handle sm_h = _sbv->_as->add_node(PREDICATE_NODE, "smiling");
     Handle sp_h = _sbv->_as->add_node(CONCEPT_NODE, "sal_point");
@@ -133,9 +137,12 @@ void SingBotVision::vision_loop(SingBotVision *_sbv)
 
     while(_sbv->ok){
         img = _sbv->read_frame();
+        cvtColor(img, yimg, COLOR_BGR2RGB);
         cvtColor(img, fimg, COLOR_BGR2GRAY);
         equalizeHist(fimg.clone(), fimg);
         faces = _sbv->detect_faces(fimg);
+        _sbv->yolo_dets = _sbv->rpy->ClassifyFrame(yimg);
+        std::cout<<"**** YOLO Detections **** = "<<_sbv->yolo_dets.classes<<"\n";
         for(idx = 0; idx < faces.size(); idx++) {
             str = "face_" + std::to_string(idx);
             h = _sbv->_as->add_node(CONCEPT_NODE, str);
@@ -143,8 +150,8 @@ void SingBotVision::vision_loop(SingBotVision *_sbv)
             cent.y = faces[idx].y + (faces[idx].height/2.0);
             pap = createFloatValue(
                     vector<double>({
-                        SCALE_D(cent.x, width),
-                        SCALE_D(cent.y, height)}));
+                        SCALE_D(cent.x, _sbv->width),
+                        SCALE_D(cent.y, _sbv->height)}));
             h->setValue(ps_h, pap);
             smiles = _sbv->detect_smiles(fimg(faces[idx]));
             pap = createFloatValue(smiles.empty() ? 0.0 : 1.0);
@@ -152,8 +159,8 @@ void SingBotVision::vision_loop(SingBotVision *_sbv)
             cent = _sbv->detect_sal(fimg);
             pap = createFloatValue(
                     vector<double>({
-                        SCALE_D(cent.x, width),
-                        SCALE_D(cent.y, height)}));
+                        SCALE_D(cent.x, _sbv->width),
+                        SCALE_D(cent.y, _sbv->height)}));
             sp_h->setValue(ps_h, pap);
         }
 

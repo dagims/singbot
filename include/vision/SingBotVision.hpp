@@ -34,6 +34,8 @@
 
 #include <opencog/guile/SchemePrimitive.h>
 
+#include "vision/RaspiYolo.hpp"
+
 #include <iostream>
 #include <string>
 #include <cstdio>
@@ -53,6 +55,9 @@ private:
     AtomSpace *_as;
     thread *run_v;
     
+    RaspiYolo *rpy;
+    detection yolo_dets;
+
     static void vision_loop(SingBotVision *);
     Mat read_frame();
     vector<Rect> detect_faces(Mat in);

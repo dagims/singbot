@@ -31,6 +31,7 @@ RaspiYolo::RaspiYolo(std::string _datacfg, std::string _cfgfile,
     {
         cap.set(CV_CAP_PROP_FRAME_WIDTH, _cap_width);
         cap.set(CV_CAP_PROP_FRAME_HEIGHT, _cap_height);
+        //cap.set(CV_CAP_PROP_FORMAT, CV_8UC3);
         if ( !cap.open())
         {
             fprintf(stderr, "Error opening camera\n");
@@ -66,7 +67,7 @@ RaspiYolo::RaspiYolo(std::string _datacfg, std::string _cfgfile,
     }
 }
 
-detections RaspiYolo::ClassifyFrame(cv::Mat &_in)
+detection RaspiYolo::ClassifyFrame(cv::Mat &_in)
 {
     IplImage _img = _in;
     image im = make_image(_img.width,
@@ -79,10 +80,10 @@ detections RaspiYolo::ClassifyFrame(cv::Mat &_in)
     printf("Predicted in %f seconds.\n", what_time_is_it_now()-_time);
     int nboxes = 0;
     detection *dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes);
-    detections _dets({*dets});
     layer l = net->layers[net->n-1];
-    if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
-    draw_detections(im, dets, nboxes, thresh, names, alphabet, l.classes); 
+    classes = l.classes;
+    if (nms) do_nms_sort(dets, nboxes, classes, nms);
+    draw_detections(im, dets, nboxes, thresh, names, alphabet, classes);
     free_detections(dets, nboxes);
 
     #ifdef DEBUG_PREVIEW
@@ -95,16 +96,29 @@ detections RaspiYolo::ClassifyFrame(cv::Mat &_in)
     
     free_image(im);
     free_image(sized);
-return _dets;
+return *dets;
+}
+
+std::string RaspiYolo::get_class_name(int class_id)
+{
+//    std::vector<char *> __st(names);
+    std::string _st = names[class_id];
+    return _st;
 }
 
 void RaspiYolo::cap_continuous(RaspiYolo *_ry)
 {
     while(_ry->isOk())
     {
-       _ry->cap.grab();
-       _ry->cap.retrieve(_ry->_img);
-       detections dets = _ry->ClassifyFrame(_ry->_img);
+        _ry->cap.grab();
+        _ry->cap.retrieve(_ry->_img);
+        detection dets = _ry->ClassifyFrame(_ry->_img);
+        std::cout<<"**** yolo detections ****"<<dets.classes<<"\n";
+        std::cout<<"Probabilities: \n";
+        for(int i = 0; i < _ry->classes;  ++i)
+        {
+            std::cout<<_ry->names[i]<<" = "<<dets.prob[i]<<std::endl;
+        }
     }
 }
 

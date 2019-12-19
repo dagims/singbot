@@ -20,8 +20,6 @@ extern "C" {
 #include <thread>
 #include <mutex>
 
-typedef std::vector<detection> detections;
-
 class RaspiYolo {
 private:
     raspicam::RaspiCam_Cv cap;
@@ -41,6 +39,7 @@ private:
     list *options;
     char *name_list;
     char **names;
+    int classes;
     image **alphabet;
     network *net;
     double _time;
@@ -62,7 +61,8 @@ public:
     ~RaspiYolo();
     
     bool isOk();
-    detections ClassifyFrame(cv::Mat &in);
+    detection ClassifyFrame(cv::Mat &in);
+    std::string get_class_name(int class_id);
 };
 
 #endif // _RASPI_YOLO_HPP_

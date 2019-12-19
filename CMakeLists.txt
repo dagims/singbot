@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 11)
 find_package(raspicam REQUIRED)
 find_package(Guile REQUIRED)
 find_package(NNPACK REQUIRED)
-find_package(AtomSpaca QUIET)
+find_package(AtomSpace QUIET)
 find_package(OpenCV REQUIRED)
 
 configure_file(
@@ -46,6 +46,7 @@ set(VISION_LD
     -lpthreadpool)
 if(ATOMSPACE_FOUND)
     set(VISION_SRC_FILES
+        ${VISION_SRC_FILES}
         "${CMAKE_SOURCE_DIR}/lib/vision/SingBotVision.cpp")
 endif(ATOMSPACE_FOUND)        
 
@@ -59,10 +60,10 @@ add_library(singbot SHARED robo-guile.c)
 target_link_libraries(singbot ${GUILE_LIBRARY})
 
 file(GLOB DARKNET_SRC_FILES "${CMAKE_SOURCE_DIR}/lib/darknet/*.c")
-add_library(darknet STATIC ${DARKNET_SRC_FILES})
+add_library(darknet SHARED ${DARKNET_SRC_FILES})
 target_compile_options(darknet PRIVATE ${DARKNET_CFLAGS})
 target_link_libraries(darknet
-    ${NNPACK_LIBRARY}
+    #${NNPACK_LIBRARY}
     ${OpenCV_LIBS}
     pthread
     -lpthreadpool)
@@ -77,5 +78,5 @@ target_link_libraries(
     ${VISION_LD})
 add_definitions(-DDEBUG_PREVIEW)
 add_executable(demo demo.cpp)
-target_link_libraries(demo singbotvision)
+target_link_libraries(demo singbotvision )
 #add_executable(robo-test robotest.c)
